@@ -15,7 +15,12 @@ import java.net.Socket;
 public class TCP3wputServer extends Service {
 
     private ServerSocket serverSocket;
+    private int servicePort;
     private Thread daemonThread;
+
+    public TCP3wputServer(int servicePort){
+        this.servicePort = servicePort;
+    }
 
     @Override
     public void onCreate() {
@@ -26,18 +31,13 @@ public class TCP3wputServer extends Service {
             @Override
             public void run() {
                 try {
-                    serverSocket = new ServerSocket(9999);
-                    while(true){
-                        try {
-                            Socket clientConn = serverSocket.accept();
+                    serverSocket = new ServerSocket(servicePort);
+                    while(true) {
+                        Socket clientConn = serverSocket.accept();
 
-                            /* TODO: serve the incoming client connection;
-                             ClientRequestHandler crh = new ClientRequestHandler(clientConn);
-                            */
-
-                        } catch (IOException e) {
-                            Log.d("BADCONN", "onCreate: "+e.getMessage());
-                        }
+                        /* TODO: serve the incoming client connection;
+                         ClientRequestHandler crh = new ClientRequestHandler(clientConn);
+                        */
                     }
                 } catch (IOException e) {
                     Log.d("BADSERV", "onCreate: "+e.getMessage());
