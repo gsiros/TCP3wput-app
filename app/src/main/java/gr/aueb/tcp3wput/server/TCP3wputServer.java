@@ -15,33 +15,25 @@ import java.net.Socket;
 public class TCP3wputServer extends Service {
 
     private ServerSocket serverSocket;
-    private int servicePort;
+    private final int SERVICE_PORT = 5001; // Hardcoded, perhaps should change.
     private Thread daemonThread;
-
-    public TCP3wputServer(int servicePort){
-        this.servicePort = servicePort;
-    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         Toast.makeText(this, "Server started!", Toast.LENGTH_LONG).show();
 
-        Runnable daemon = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    serverSocket = new ServerSocket(servicePort);
-                    while(true) {
-                        Socket clientConn = serverSocket.accept();
-
-                        /* TODO: serve the incoming client connection;
-                         ClientRequestHandler crh = new ClientRequestHandler(clientConn);
-                        */
-                    }
-                } catch (IOException e) {
-                    Log.d("BADSERV", "onCreate: "+e.getMessage());
+        Runnable daemon = () -> {
+            try {
+                serverSocket = new ServerSocket(SERVICE_PORT);
+                while(true) {
+                    Socket clientConn = serverSocket.accept();
+                    /* TODO: serve the incoming client connection;
+                     ClientRequestHandler crh = new ClientRequestHandler(clientConn);
+                    */
                 }
+            } catch (IOException e) {
+                Log.d("BADSERV", "onCreate: "+e.getMessage());
             }
         };
         daemonThread = new Thread(daemon);
