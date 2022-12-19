@@ -44,6 +44,15 @@ public class TCP3wputServer extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // Safely close the open socket;
+        try {
+            if(!serverSocket.isClosed()){
+                serverSocket.close();
+            }
+        }catch (IOException e){
+            Log.e("BADCLOSESERV", "onDestroy: error while closing service socket.", e);
+        }
         // TODO: find a proper way to destory the daemon thread.
     }
 
