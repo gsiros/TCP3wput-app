@@ -1,6 +1,7 @@
 package gr.aueb.tcp3wput.server;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
@@ -13,6 +14,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class TCP3wputServer extends Service {
+
+    private Context context = getApplicationContext();
 
     private ServerSocket serverSocket;
     private final int SERVICE_PORT = 5001; // Hardcoded, perhaps should change.
@@ -28,9 +31,8 @@ public class TCP3wputServer extends Service {
                 serverSocket = new ServerSocket(SERVICE_PORT);
                 while(true) {
                     Socket clientConn = serverSocket.accept();
-                    /* TODO: serve the incoming client connection;
-                     ClientRequestHandler crh = new ClientRequestHandler(clientConn);
-                    */
+                     ClientRequestHandler crh = new ClientRequestHandler(context, clientConn);
+                     crh.start();
                 }
             } catch (IOException e) {
                 Log.d("BADSERV", "onCreate: "+e.getMessage());
@@ -38,7 +40,6 @@ public class TCP3wputServer extends Service {
         };
         daemonThread = new Thread(daemon);
         daemonThread.start();
-
     }
 
     @Override
