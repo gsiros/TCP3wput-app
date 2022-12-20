@@ -104,17 +104,32 @@ public class ClientRequestHandler extends Thread {
 
         for(int i=0; i<fragnames.length; i++){
             try {
-                InputStream inputStream = am.open(fragnames[i]);
-                if (inputStream != null){
-                    fragments[i] = inputStream;
-                } else {
-                    throw new FileNotFoundException("Requested fragment" + i + " named '" + fragments[i] + "' was not found.");
-                }
+                fragments[i] = getSingleFragment(fragnames[i]);
             } catch (IOException e) {
-                Log.e("BAD_FRAG_READ", "getFragments: error when opening fragment.", e);
+                Log.e("BAD_FRAG_READ", "getFragments: error when opening fragment "+i+" named '" + fragments[i]+"'.", e);
             }
         }
         return fragments;
+    }
+
+    /**
+     * This method fetches a single fragment from the Android assets folder and returns
+     * an InputStream linked to it.
+     *
+     * @param fragname String of fragment file name
+     * @return returns an InputStream linked to the fragment from the assets folder
+     * @throws IOException when asset is missing/nonexistent
+     */
+    private InputStream getSingleFragment(String fragname) throws IOException {
+        InputStream fragment;
+        AssetManager am = context.getAssets();
+        InputStream inputStream = am.open(fragname);
+        if (inputStream != null){
+            fragment = inputStream;
+        } else {
+            throw new FileNotFoundException("Requested fragment was not found.");
+        }
+        return fragment;
     }
 
 }
