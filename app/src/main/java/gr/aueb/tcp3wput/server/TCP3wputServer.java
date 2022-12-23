@@ -15,7 +15,7 @@ import java.net.Socket;
 
 public class TCP3wputServer extends Service {
 
-    private Context context = getApplicationContext();
+    private Context context;
 
     private ServerSocket serverSocket;
     private final int SERVICE_PORT = 5096; // Hardcoded, perhaps should change.
@@ -23,7 +23,7 @@ public class TCP3wputServer extends Service {
 
     @Override
     public void onCreate() {
-        super.onCreate();
+        context = getApplicationContext();
         Toast.makeText(this, "Server started!", Toast.LENGTH_LONG).show();
 
         Runnable daemon = () -> {
