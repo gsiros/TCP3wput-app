@@ -4,9 +4,13 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,99 +21,102 @@ public class ClientRequestHandler extends Thread {
 
     private Context context;
     private Socket clientSocket;
-    private ObjectInputStream objectInputStream = null;
+    private DataInputStream dataInputStream = null;
+    private DataOutputStream dataOutputStream = null;
+
+    private final String FILE_EXTENSION = ".m4s";
 
     public ClientRequestHandler(Context context, Socket clientSocket){
         this.context = context;
         this.clientSocket = clientSocket;
+        try {
+            this.dataOutputStream = new DataOutputStream(this.clientSocket.getOutputStream());
+            this. dataInputStream = new DataInputStream(this.clientSocket.getInputStream());
+        } catch (Exception e) {
+            Log.e("BAD_SOCK_STREAM", "ClientRequestHandler: error in getting input/output streams from connection.", e);
+        }
+    }
+
+    /**
+     * Author; F. Bistas
+     *
+     * Filenames are received in the form: String(["s001.ms", "s002.ms"]).
+     * Removes the commas the brackets and the quotes from the string.
+     *
+     * @param filenames the filenames json array turned toString()
+     * @return all the filenames to read
+     */
+    private String[] parseToStringArray(String filenames) {
+        filenames = filenames.replace("[", "");
+        filenames = filenames.replace("]", "");
+        filenames = filenames.replace("\"", "");
+        filenames = filenames.replace("Out of range number was given or there aren't any more files", "");
+        filenames = filenames.replace("Formated file number remained null after string format", "");
+        Log.d("PROG", "parseToStringArray: "+"Turned received json array to: " + filenames);
+        return filenames.split(",");
     }
 
     @Override
     public void run() {
-        super.run();
-        try {
-            // Set up the object input stream that will receive the JSON-formatted requests.
-            this.objectInputStream = new ObjectInputStream(this.clientSocket.getInputStream());
-            JSONObject jsonRequest = (JSONObject) this.objectInputStream.readObject();
-            // Process the JSON request.
-            String[] fragnames = processRequest(jsonRequest);
-            InputStream[] frags = getFragments(fragnames);
-            // TODO: decide on how the files are going to be sent.
-
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * This method processes the JSON-formatted client request and
-     * returns the filenames of the requested fragments as Strings.
-     *
-     * @param jsonRequest the client request in JSON format
-     * @return returns array of names of the requested fragments
-     */
-    private String[] processRequest(JSONObject jsonRequest) {
-        // TODO: Check if the request is directed to the correct server.
-        String[] fragnames;
-        try {
-            int[] filenums = (int[]) jsonRequest.get("Filenames");
-            fragnames = createFileNameFromNumberLEGACY(filenums);
-            return fragnames;
-        } catch (JSONException e) {
-            Log.e("BADJSONREQ", "processRequest: bad JSON format.", e);
-            return null;
-        }
-    }
-
-    /**
-     * *Modified* version of Bistas' & Toumazatos' 'createFileNameFromNumber'
-     * method to support lower Android SDKs.
-     *
-     * Creates a new file name of the following format:
-     * sXXX where XXX starts from 001 and goes up to 160.
-     *
-     * @param number the number of the file we want to request next
-     * @return The formated file names or an error if an error occured.
-     */
-    private String[] createFileNameFromNumberLEGACY(int[] number) {
-
-        String[] names = new String[number.length];
-
-        for(int i=0; i<number.length; i++){
-            if (number[i] < 1 || number[i] > 160) {
-                names[i] = "FNF"; // FNF: File Not Found
-            } else {
-                String formatted = String.format("%03d", number[i]);
-                if (formatted == null){
-                    names[i] = "BNF"; // BADF: Bad Number Formatting
-                    break;
-                }  else {
-                    names[i] = "s" + formatted;
-                }
-            }
-        }
-        return names;
-    }
-
-    /**
-     * This method fetches the fragments from the Android assets folder and returns
-     * an array of InputStreams.
-     *
-     * @param fragnames String array of the fragment file names
-     * @return returns an InputStream array linked to each fragment from the assets folder
-     */
-    private InputStream[] getFragments(String[] fragnames){
-        InputStream[] fragments = new InputStream[fragnames.length];
-        AssetManager am = context.getAssets();
-
-        for(int i=0; i<fragnames.length; i++){
+        Log.d("PROG", "run: "+"Handling connection from: " + this.clientSocket.getInetAddress());
+        while(!this.clientSocket.isClosed()){ // WARNING: WHAT HAPPENS IF CONNECTION IS CLOSED IS UNDEFINED.
             try {
-                fragments[i] = getSingleFragment(fragnames[i]);
-            } catch (IOException e) {
-                Log.e("BAD_FRAG_READ", "getFragments: error when opening fragment "+i+" named '" + fragments[i]+"'.", e);
+                String string_json = dataInputStream.readUTF();
+                JSONObject json = new JSONObject(string_json);
+                JSONArray filenames = ((JSONArray) json.get("Filenames"));
+                String[] workable = parseToStringArray(filenames.toString());
+                Log.d("PROG", "run: "+"Length of workable is: " + workable.length);
+                // means its finished sending ALL the files
+                if (workable.length == 0) {
+                    this.clientSocket.close();
+                    break;
+                }
+                this.dataOutputStream.writeInt(workable.length);
+                this.dataOutputStream.flush();
+
+                // Modified code to fit older SDKs:
+                for(String filename : workable)
+                    sendFile(filename);
+
+                Log.d("PROG", "run: "+"Finished sending files to the client.");
+            } catch (Exception e) {
+                Log.e("BAD_SEND_FILE", "run: "+"Exception occurred while receiving requests and sending files.", e);
+
+                try {
+                    this.clientSocket.close();
+                } catch (IOException e1) {
+                    Log.e("BAD_CONN_CLOSE", "run: Couldn't close the connection.", e1);
+                }
+                break;
             }
         }
-        return fragments;
+    }
+
+    private void sendFile(String filename) {
+        try {
+            InputStream fileInputStream = getSingleFragment(filename);
+            // send the file name
+            String fullname = filename+this.FILE_EXTENSION;
+            Log.d("PROG", "sendFile: "+"Sending new file to client: " + fullname);
+            this.dataOutputStream.writeUTF(filename+this.FILE_EXTENSION);
+            this.dataOutputStream.flush();
+
+            // send the file size
+            int fsize = fileInputStream.available();
+            Log.d("PROG", "sendFile: "+"Sending file length: " + fsize + " to client.");
+            this.dataOutputStream.writeLong(fsize);
+            this.dataOutputStream.flush();
+            // chunking the file
+            int bytes;
+            byte[] buffer = new byte[4 * 1024];
+            while ((bytes = fileInputStream.read(buffer)) != -1) {
+                this.dataOutputStream.write(buffer, 0, bytes);
+                this.dataOutputStream.flush();
+            }
+            fileInputStream.close();
+        } catch (Exception e) {
+            Log.e("BAD_SEND_FILE", "sendFile: "+"Exception occured while reading or the sending the file: " + filename, e);
+        }
     }
 
     /**
@@ -123,7 +130,7 @@ public class ClientRequestHandler extends Thread {
     private InputStream getSingleFragment(String fragname) throws IOException {
         InputStream fragment;
         AssetManager am = context.getAssets();
-        InputStream inputStream = am.open(fragname);
+        InputStream inputStream = am.open(fragname+this.FILE_EXTENSION);
         if (inputStream != null){
             fragment = inputStream;
         } else {
