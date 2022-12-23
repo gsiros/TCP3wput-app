@@ -18,7 +18,7 @@ public class TCP3wputServer extends Service {
     private Context context = getApplicationContext();
 
     private ServerSocket serverSocket;
-    private final int SERVICE_PORT = 5001; // Hardcoded, perhaps should change.
+    private final int SERVICE_PORT = 5096; // Hardcoded, perhaps should change.
     private Thread daemonThread;
 
     @Override
