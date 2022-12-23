@@ -24,7 +24,7 @@ public class TCP3wputServer extends Service {
     @Override
     public void onCreate() {
         context = getApplicationContext();
-        Toast.makeText(this, "Server started!", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Server started!", Toast.LENGTH_SHORT).show();
 
         Runnable daemon = () -> {
             try {
@@ -44,7 +44,6 @@ public class TCP3wputServer extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
 
         // Safely close the open socket;
         try {
@@ -54,7 +53,7 @@ public class TCP3wputServer extends Service {
         }catch (IOException e){
             Log.e("BADCLOSESERV", "onDestroy: error while closing service socket.", e);
         }
-        // TODO: find a proper way to destory the daemon thread.
+        Toast.makeText(this, "Server stopped!", Toast.LENGTH_SHORT).show();
     }
 
     // onBind method to be left intact; no overloading required.
