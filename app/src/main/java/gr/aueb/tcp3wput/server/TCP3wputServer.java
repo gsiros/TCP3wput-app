@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import gr.aueb.tcp3wput.MainActivity;
+
 public class TCP3wputServer extends Service {
 
     private Context context;
@@ -31,8 +33,8 @@ public class TCP3wputServer extends Service {
                 serverSocket = new ServerSocket(SERVICE_PORT);
                 while(true) {
                     Socket clientConn = serverSocket.accept();
-                     ClientRequestHandler crh = new ClientRequestHandler(context, clientConn);
-                     crh.start();
+                    ClientRequestHandler crh = new ClientRequestHandler(context, clientConn);
+                    crh.start();
                 }
             } catch (IOException e) {
                 Log.d("BADSERV", "onCreate: "+e.getMessage());
