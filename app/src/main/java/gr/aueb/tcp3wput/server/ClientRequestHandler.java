@@ -52,7 +52,10 @@ public class ClientRequestHandler extends Thread {
         filenames = filenames.replace("\"", "");
         filenames = filenames.replace("Out of range number was given or there aren't any more files", "");
         filenames = filenames.replace("Formated file number remained null after string format", "");
-        Log.d("PROG", "parseToStringArray: "+"Turned received json array to: " + filenames);
+        Log.d("PROG", "parseToStringArray: "+"Turned received json array to: '" + filenames+"'");
+        if(filenames.equals("")){
+            return new String[0];
+        }
         return filenames.split(",");
     }
 
