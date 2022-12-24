@@ -6,16 +6,125 @@
     android:layout_height="match_parent"
     tools:context=".fragments.ClientFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:text="Client is here."
-        app:layout_constraintBottom_toBottomOf="parent"
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        app:layout_constraintBottom_toTopOf="@+id/inputsLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
+    </ListView>
+
+    <LinearLayout
+        android:id="@+id/inputsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="5dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/linear1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal"
+            android:weightSum="5"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <EditText
+                android:id="@+id/serverAIPEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Server A IP"
+                android:inputType="textPersonName"
+                android:layout_weight="3"/>
+
+            <EditText
+                android:id="@+id/serverAPortEDitText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Port"
+                android:inputType="number"
+                android:layout_weight="1"/>
+
+            <EditText
+                android:id="@+id/serverAAnalogy"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Ratio A"
+                android:inputType="number"
+                android:layout_weight="1"/>
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linear2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/linear1"
+            android:gravity="center_horizontal"
+            android:weightSum="5"
+
+            >
+
+            <EditText
+                android:id="@+id/serverBIPEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Server B IP"
+                android:inputType="textPersonName"
+                android:layout_weight="3"/>
+
+            <EditText
+                android:id="@+id/serverBPortEDitText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Port"
+                android:inputType="number"
+                android:layout_weight="1"/>
+
+            <EditText
+                android:id="@+id/serverBAnalogy"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Ratio B"
+                android:inputType="number"
+                android:layout_weight="1"/>
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linear3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/linear2">
+
+
+
+
+
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/startRequesting"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="START REQUESTING"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linear3" />
+
+
+    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
