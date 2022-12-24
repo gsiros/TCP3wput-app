@@ -1,4 +1,4 @@
-package gr.aueb.tcp3wput.server;
+package gr.aueb.tcp3wput.singleton;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -33,6 +33,7 @@ public class ClientRequestHandler extends Thread {
             this.dataOutputStream = new DataOutputStream(this.clientSocket.getOutputStream());
             this. dataInputStream = new DataInputStream(this.clientSocket.getInputStream());
         } catch (Exception e) {
+            ServerBackend.getInstance().addLog("Error in getting input/output streams from connection.");
             Log.e("BAD_SOCK_STREAM", "ClientRequestHandler: error in getting input/output streams from connection.", e);
         }
     }
@@ -52,6 +53,7 @@ public class ClientRequestHandler extends Thread {
         filenames = filenames.replace("\"", "");
         filenames = filenames.replace("Out of range number was given or there aren't any more files", "");
         filenames = filenames.replace("Formated file number remained null after string format", "");
+        ServerBackend.getInstance().addLog("parseToStringArray: "+"Turned received json array to: '" + filenames+"'");
         Log.d("PROG", "parseToStringArray: "+"Turned received json array to: '" + filenames+"'");
         if(filenames.equals("")){
             return new String[0];
@@ -61,6 +63,7 @@ public class ClientRequestHandler extends Thread {
 
     @Override
     public void run() {
+        ServerBackend.getInstance().addLog("Handling connection from: " + this.clientSocket.getInetAddress());
         Log.d("PROG", "run: "+"Handling connection from: " + this.clientSocket.getInetAddress());
         while(!this.clientSocket.isClosed()){ // WARNING: WHAT HAPPENS IF CONNECTION IS CLOSED IS UNDEFINED.
             try {
@@ -68,6 +71,7 @@ public class ClientRequestHandler extends Thread {
                 JSONObject json = new JSONObject(string_json);
                 JSONArray filenames = ((JSONArray) json.get("Filenames"));
                 String[] workable = parseToStringArray(filenames.toString());
+                ServerBackend.getInstance().addLog("Length of workable is: " + workable.length);
                 Log.d("PROG", "run: "+"Length of workable is: " + workable.length);
                 // means its finished sending ALL the files
                 if (workable.length == 0) {
@@ -81,13 +85,16 @@ public class ClientRequestHandler extends Thread {
                 for(String filename : workable)
                     sendFile(filename);
 
+                ServerBackend.getInstance().addLog("Finished sending files to the client.");
                 Log.d("PROG", "run: "+"Finished sending files to the client.");
             } catch (Exception e) {
+                ServerBackend.getInstance().addLog("ERROR: "+"Exception occurred while receiving requests and sending files.");
                 Log.e("BAD_SEND_FILE", "run: "+"Exception occurred while receiving requests and sending files.", e);
 
                 try {
                     this.clientSocket.close();
                 } catch (IOException e1) {
+                    ServerBackend.getInstance().addLog("ERROR: "+" Couldn't close the connection.");
                     Log.e("BAD_CONN_CLOSE", "run: Couldn't close the connection.", e1);
                 }
                 break;
@@ -100,13 +107,15 @@ public class ClientRequestHandler extends Thread {
             InputStream fileInputStream = getSingleFragment(filename);
             // send the file name
             String fullname = filename+this.FILE_EXTENSION;
+            ServerBackend.getInstance().addLog("Sending new file to client: " + fullname);
             Log.d("PROG", "sendFile: "+"Sending new file to client: " + fullname);
             this.dataOutputStream.writeUTF(filename+this.FILE_EXTENSION);
             this.dataOutputStream.flush();
 
             // send the file size
             int fsize = fileInputStream.available();
-            Log.d("PROG", "sendFile: "+"Sending file length: " + fsize + " to client.");
+            ServerBackend.getInstance().addLog("Sending file length: " + fsize + " bytes to client.");
+            Log.d("PROG", "sendFile: "+"Sending file length: " + fsize + " bytes to client.");
             this.dataOutputStream.writeLong(fsize);
             this.dataOutputStream.flush();
             // chunking the file
@@ -118,6 +127,7 @@ public class ClientRequestHandler extends Thread {
             }
             fileInputStream.close();
         } catch (Exception e) {
+            ServerBackend.getInstance().addLog("Exception occured while reading or the sending the file: " + filename);
             Log.e("BAD_SEND_FILE", "sendFile: "+"Exception occured while reading or the sending the file: " + filename, e);
         }
     }
